@@ -34,15 +34,16 @@ function fcnWeekBstr_Master() {
   var PlayerTable = shtWeekBstrTable.getRange(5,2,NbPlayer,1).getValues();
   
   // Function Variables
-  var CardMissing = 0;
-  var BoosterAllowed = 0;
   var BoosterCheck;
   var RowPlayer;
+  var ValType;
+  var ValInt;
   var rngBstrCheck;
   var PopulateStatus;
   var UpdtListStatus;
   var ErrorMsg
   var ConfirmationMsg;
+  var Error = 'No Error';
   
   // Email Addresses Array
   var EmailAddresses = new Array(2); // 0= Language Preference, 1= email address
@@ -57,40 +58,57 @@ function fcnWeekBstr_Master() {
     for (var val = 0; val < 4; val++) PackData[cardnum][val] = '';
   }
   
-  // Verify that Booster is allowed for selected week
+  // Check if All information has been entered and is valid 
+  if(WeekNum == '') Error = "Week Number is missing. Please select a Week Number";
+  if(Player == '')  Error = "Player is missing. Please select a Player";
   
-  if(Player != ''){
+  // Verify that Booster is allowed for selected week
+  if(Player != '' && Error == 'No Error'){
     // Find Player Row
     for(var i = 0; i < NbPlayer; i++){
-      Logger.log(PlayerTable[i][0]);
       if(PlayerTable[i][0] == Player) {
         RowPlayer = i+5;
-        Logger.log(RowPlayer);
         i = NbPlayer;
       }
     }
+  }
+  
+  // Check if Booster can be added for select week
+  if(Player != '' && WeekNum != '' && Error == 'No Error'){
+    rngBstrCheck = shtWeekBstrTable.getRange(RowPlayer, WeekNum+2);
+    BoosterCheck = rngBstrCheck.getValue();
+  
+    // If there is a value in the Check Table, the Booster is not allowed for selected week
+    if(BoosterCheck != '') Error = Player + " already added a booster for week " + WeekNum + ". Please select another week. ";
+  }
+  
+  // Check if Booster Information is Valid
+  if(Player != '' && WeekNum != '' && Error == 'No Error'){
+    // Verify all Booster information is present and is an integer
+    for (i = 0; i < 16; i++){
+      // Verify that Cell is not Empty
+      if(i == 0 && BoosterData[i][0] == '') Error = "Booster Set Name is missing";
+      if(i >  0 && BoosterData[i][0] == '') Error = "Card Number for Card "+ i +" is missing";
+      // Verify that Value is a Number
+      if(i > 0 && i < 15 && BoosterData[i][0] != ''){
+        ValType = typeof(BoosterData[i][0]);
+        ValInt = BoosterData[i][0] % 1; 
+        Logger.log("Card %s: %s",i,ValInt);
+        if(ValType != 'number' || ValInt != 0) {
+          Error = 'Card ' + i + ' does not have a valid number';
+          i = 16;
+        }
+      }
+    }
+  }
+  
+  // If All information is present, execute
+  if(Error == 'No Error'){
+    
     // Open Player Card Pool DB and Lists
     shtPlyrCardDB = SpreadsheetApp.openById(ssPlyrCardDBId).getSheetByName(Player);
     shtPlyrCardListEn = SpreadsheetApp.openById(ssPlyrCardListEnId).getSheetByName(Player);
     shtPlyrCardListFr = SpreadsheetApp.openById(ssPlyrCardListFrId).getSheetByName(Player);
-  }
-  
-  // Get Weekly Booster Check
-  if(WeekNum != '' && Player != ''){
-    rngBstrCheck = shtWeekBstrTable.getRange(RowPlayer, WeekNum+2);
-    BoosterCheck = rngBstrCheck.getValue();
-  
-    // If there is no value in the Check Table, the Booster is allowed
-    if(BoosterCheck == '') BoosterAllowed = 1;
-  }
-  
-  // Verify all Booster information is present
-  for (i = 0; i < 16; i++){
-    if(BoosterData[i][0] == '') CardMissing = 1;
-  }
-
-  // If All information is present, execute
-  if(BoosterAllowed == 1 && WeekNum != '' && Player != '' && CardMissing == 0){
     
     // Add Booster to Card DB and Regenerate Card Pool List
     PackData = fcnPopulateCardDB(ss, Player, BoosterData, PackData, shtPlyrCardDB, shtPlyrCardListEn, shtPlyrCardListFr);
@@ -115,39 +133,21 @@ function fcnWeekBstr_Master() {
       Logger.log(UpdtListStatus);
       
       // Clear All Info on OK
-//      shtWeekBstr.getRange(1, 2, 21, 1).clearContent();
+      shtWeekBstr.getRange(1, 2, 21, 1).clearContent();
       
       // Add Check to Weekly Booster Table
       rngBstrCheck.setValue('X');
     }
   }
   
-  // If Week Number is missing, display Error Message
-  if(WeekNum == '' ){
-    ErrorMsg = "Please Select Week Number before Submitting";
+  // If an Error has been detected, display Error Message
+  if(Error != 'No Error'){
+    ErrorMsg = Error;
     ui.alert("ERROR",ErrorMsg, ui.ButtonSet.OK);
-  }
-
-  // If Name is missing, display Error Message
-  if(Player == ''){
-    ErrorMsg = "Please Select Player Name before Submitting";
-    ui.alert("ERROR",ErrorMsg, ui.ButtonSet.OK);
-  }
-
-  // If Booster Information is missing, display Error Message
-  if(BoosterAllowed == 1 && CardMissing == 1){
-    ErrorMsg = "Please Make sure you entered all Booster Information before Submitting";
-    ui.alert("ERROR",ErrorMsg, ui.ButtonSet.OK);
-  }
-
-  // If Booster was already added, display Error Message
-  if(BoosterAllowed == 0 && WeekNum != '' && Player != ''){
-    ErrorMsg = "A booster has already been added to " + Player + "'s Card Pool, please select another week";
-    ui.alert("ERROR", ErrorMsg, ui.ButtonSet.OK)
   }
   
   // If Populate is not Complete, send Status
-  if(BoosterAllowed == 1 && WeekNum != '' && Player != '' && CardMissing == 0 && PopulateStatus != 'Card DB Populate: Complete'){
+  if(WeekNum != '' && Player != '' && Error == 'No Error' && PopulateStatus != 'Card DB Populate: Complete'){
     ErrorMsg = PopulateStatus;
     ui.alert("ERROR",ErrorMsg, ui.ButtonSet.OK);
   }

@@ -75,13 +75,13 @@ function fcnPopulateCardDB(ss, Player, BoosterData, PackData, shtPlyrCardDB, sht
               // If Masterpiece Set Name is null, set doesn't have a Masterpiece Series, Reject Pack
               if(SetNameMstr == '') {
                 MasterpieceValid = -1;
-                Status = 'Card DB Populate: Set does not have Masterpiece Series';
+                Status = 'Set does not have Masterpiece Series';
               }
               
               // If Masterpiece Card Number is greater than 54, Card Number is Invalid, Reject Pack
               if(CardNum > 54) {
                 MasterpieceValid = -1;
-                Status = 'Card DB Populate: Masterpiece Card Number is not valid';
+                Status = 'Masterpiece Card Number is not valid';
               }              
               
               // If Masterpiece Set is Valid, Process Masterpiece Card

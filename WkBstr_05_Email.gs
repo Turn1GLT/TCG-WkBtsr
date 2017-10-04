@@ -64,6 +64,12 @@ function fcnSendCnfrmEmailEN(Player, Week, EmailAddresses, PackData, shtConfig) 
   Language = EmailAddresses[0];
   Address  = EmailAddresses[1];
  
+  // Add Masterpiece mention if necessary
+  if (PackData[15][2] == 'Masterpiece'){
+    //var Masterpiece = PackData[14][2];
+    PackData[14][2] += ' (Masterpiece)' 
+  }
+    
   // Set Email Subject
   EmailSubject = LeagueNameEN + " - Week " + Week + " - Weekly Booster" ;
     
@@ -125,6 +131,12 @@ function fcnSendCnfrmEmailFR(Player, Week, EmailAddresses, PackData, shtConfig) 
   // Player Email and Language Preference
   Language = EmailAddresses[0];
   Address  = EmailAddresses[1];
+  
+  // Add Masterpiece mention if necessary
+  if (PackData[15][2] == 'Masterpiece'){
+    //var Masterpiece = PackData[14][2];
+    PackData[14][2] += ' (Masterpiece)' 
+  }
  
   // Set Email Subject
   EmailSubject = LeagueNameFR + " - Semaine " + Week + " - Booster de Semaine" ;
@@ -164,7 +176,7 @@ function subMatchReportTable(EmailMessage, Headers, PackData, Language, Param){
   var CardName = Headers[18][0];
   var CardRarity = Headers[19][0];
     
-  for(var row=0; row<16; ++row){
+  for(var row=0; row<15; ++row){
 
     // Translate MatchData if necessary
     if (Language == 'English' && PackData[row][0] == 'Oui') PackData[row][0] = 'Yes';
@@ -183,22 +195,10 @@ function subMatchReportTable(EmailMessage, Headers, PackData, Language, Param){
       EmailMessage += '</b></font><br><table style="border-collapse:collapse;" border = 1 cellpadding = 5><th>'+Item+'</th><th>'+CardNumber+'</th><th>'+CardName+'</th><th>'+CardRarity+'</th>';
     }
     
-    // Pack Data for the first 14 Cards 
-    if(row > 0 && row < 15 && Param == 1) {
+    // Pack Data 
+    if(row > 0 && Param == 1) {
       EmailMessage += '<tr><td>'+Headers[row][0]+'</td><td><center>'+PackData[row][1]+'</td><td>'+PackData[row][2]+'</td><td><center>'+PackData[row][3]+'</td></tr>';
     }
-      
-    // Pack Data for the first 14 Cards 
-    if(row == 15 && PackData[15][2] == 'Masterpiece' && Param == 1) {
-      
-      // Masterpiece Card Information according to language
-      if(PackData[15][2] == 'Masterpiece' && Language == 'English')  PackData[15][2] = "Card 14 is a Masterpiece";
-      if(PackData[15][2] == 'Masterpiece' && Language == 'Français') PackData[15][2] = "Carte 14 est une Masterpiece";
-      
-      // Adds Masterpiece Info to Table if Masterpiece is present
-      EmailMessage += '<tr><td>'+Headers[row][0]+'</td><td><center>'+PackData[row][1]+'</td><td>'+PackData[row][2]+'</td><td><center>'+PackData[row][3]+'</td></tr>';
-    }
-    
   }
   return EmailMessage +'</table>';
 }
